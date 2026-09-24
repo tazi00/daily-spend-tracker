@@ -1,0 +1,193 @@
+/* DO NOT CHANGE */
+@import "tailwindcss";
+@import "tw-animate-css";
+@custom-variant dark (&:is(.dark *));
+
+/* DO NOT CHANGE */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  /* Ledger finance theme — extra tokens */
+  --color-income: var(--income);
+  --color-income-foreground: var(--income-foreground);
+  --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-foreground);
+  --color-rule: var(--rule);
+  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+/* Ledger finance theme — banker's ledger palette.
+   Light: paper-cream surface, ink-green currency, hairline rules.
+   Dark: bank-vault green-black, mint numerals. */
+:root {
+  --radius: 0.375rem;
+  --background: oklch(0.966 0.007 106);
+  --foreground: oklch(0.26 0.031 167);
+  --card: oklch(0.993 0.003 106);
+  --card-foreground: oklch(0.26 0.031 167);
+  --popover: oklch(0.993 0.003 106);
+  --popover-foreground: oklch(0.26 0.031 167);
+  --primary: oklch(0.42 0.079 166);
+  --primary-foreground: oklch(0.98 0.008 106);
+  --secondary: oklch(0.93 0.012 106);
+  --secondary-foreground: oklch(0.33 0.035 167);
+  --muted: oklch(0.933 0.011 106);
+  --muted-foreground: oklch(0.5 0.026 167);
+  --accent: oklch(0.918 0.025 152);
+  --accent-foreground: oklch(0.36 0.055 166);
+  --destructive: oklch(0.52 0.16 27);
+  --border: oklch(0.876 0.016 106);
+  --input: oklch(0.876 0.016 106);
+  --ring: oklch(0.53 0.077 165);
+  --income: oklch(0.46 0.099 152);
+  --income-foreground: oklch(0.985 0.008 140);
+  --surface: oklch(0.941 0.009 106);
+  --surface-foreground: oklch(0.32 0.033 167);
+  --rule: oklch(0.795 0.023 106);
+  --chart-1: oklch(0.42 0.079 166);
+  --chart-2: oklch(0.46 0.099 152);
+  --chart-3: oklch(0.616 0.121 92);
+  --chart-4: oklch(0.52 0.16 27);
+  --chart-5: oklch(0.5 0.026 167);
+  --sidebar: oklch(0.966 0.007 106);
+  --sidebar-foreground: oklch(0.26 0.031 167);
+  --sidebar-primary: oklch(0.42 0.079 166);
+  --sidebar-primary-foreground: oklch(0.98 0.008 106);
+  --sidebar-accent: oklch(0.93 0.012 106);
+  --sidebar-accent-foreground: oklch(0.33 0.035 167);
+  --sidebar-border: oklch(0.876 0.016 106);
+  --sidebar-ring: oklch(0.53 0.077 165);
+}
+
+.dark {
+  --background: oklch(0.213 0.019 180);
+  --foreground: oklch(0.931 0.011 150);
+  --card: oklch(0.255 0.021 178);
+  --card-foreground: oklch(0.931 0.011 150);
+  --popover: oklch(0.255 0.021 178);
+  --popover-foreground: oklch(0.931 0.011 150);
+  --primary: oklch(0.77 0.121 163);
+  --primary-foreground: oklch(0.2 0.024 178);
+  --secondary: oklch(0.303 0.022 177);
+  --secondary-foreground: oklch(0.9 0.015 152);
+  --muted: oklch(0.296 0.021 178);
+  --muted-foreground: oklch(0.678 0.023 168);
+  --accent: oklch(0.315 0.028 172);
+  --accent-foreground: oklch(0.93 0.015 152);
+  --destructive: oklch(0.644 0.176 25);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.77 0.121 163);
+  --income: oklch(0.77 0.128 163);
+  --income-foreground: oklch(0.22 0.025 178);
+  --surface: oklch(0.238 0.02 178);
+  --surface-foreground: oklch(0.9 0.013 155);
+  --rule: oklch(0.345 0.023 176);
+  --chart-1: oklch(0.77 0.121 163);
+  --chart-2: oklch(0.681 0.11 118);
+  --chart-3: oklch(0.689 0.121 92);
+  --chart-4: oklch(0.644 0.176 25);
+  --chart-5: oklch(0.678 0.023 168);
+  --sidebar: oklch(0.238 0.02 178);
+  --sidebar-foreground: oklch(0.931 0.011 150);
+  --sidebar-primary: oklch(0.77 0.121 163);
+  --sidebar-primary-foreground: oklch(0.2 0.024 178);
+  --sidebar-accent: oklch(0.315 0.028 172);
+  --sidebar-accent-foreground: oklch(0.93 0.015 152);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.77 0.121 163);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-feature-settings: "calt" 1;
+  }
+  button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  /* Serif display type — report/masthead headings. */
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+  /* Tabular numerals — every money figure aligns like a ledger. */
+  .tabular {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "zero" 1;
+  }
+  /* Small uppercase labels, like statement column heads. */
+  .label-caps {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+  /* Ledger card: paper panel with hairline rule. */
+  .ledger-panel {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  /* Double-rule used to close ledger sections / underline totals. */
+  .ledger-double-rule {
+    height: 3px;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  /* Fine ruled-paper lines for ledger rows. */
+  .ledger-ruled > * + * {
+    border-top: 1px dashed var(--rule);
+  }
+  /* Faint ledger grid backdrop for hero surfaces. */
+  .ledger-grid {
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--rule) 55%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--rule) 55%, transparent) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+}
