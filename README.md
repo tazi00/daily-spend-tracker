@@ -6,120 +6,123 @@ today, and where did the money go?**
 Open the app → see today's total → see every entry → add the next expense.
 No charts, no jargon, no dashboards to decode.
 
-Built on the Freebuff web stack: **React + Vite** frontend, **Convex**
-backend/database (server-managed), **Tailwind CSS 4 + shadcn/ui** styling.
-Amounts are stored and computed as **integer paise** (₹120.50 → `12050`), so
-totals are always exact.
+## Stack
+
+- **Frontend** — HTML, CSS, vanilla JavaScript (ES modules), no framework, no
+  state library.
+- **Backend** — Node.js + Express 5, REST + JSON.
+- **Database** — SQLite via `better-sqlite3`, raw SQL, parameterized
+  statements, WAL mode. No ORM.
+- **Money** — integer paise everywhere (₹120.50 → `12050`). Floats are
+  rejected at the validation layer; totals are derived from rows by the server.
+
+```
+Browser
+  └── public/            static vanilla-JS app
+        ├── index.html
+        ├── css/
+        └── js/
+Server
+  └── server/
+        ├── routes/       HTTP: parse → service → envelope
+        ├── services/     business rules + authoritative validation
+        ├── repositories/ all SQL lives here
+        ├── db/           connection + schema
+        └── utils/        config, dates, validation helpers
+```
 
 ## Setup
 
-No local database or env vars needed — the Convex deployment is provisioned by
-the platform and the app connects via `VITE_CONVEX_URL`.
-
 ```bash
-bun install        # install dependencies
-bun run dev        # dev server (managed by the platform preview)
+bun install             # or npm install
+bun run dev             # node --watch server/server.js  (http://localhost:3000)
+bun run smoke           # end-to-end verification script (node server/smoke.js)
 ```
 
-Useful commands:
-
-| Command | Purpose |
-| --- | --- |
-| `bun tsc -b --noEmit` | typecheck the whole project |
-| `bun convex dev --once` | push Convex functions + regenerate `_generated` types |
-| `bun run lint` | eslint |
+Optional environment (see `.env.example`): `PORT`, `TZ` (server timezone —
+defaults to `Asia/Kolkata`), `DB_PATH`, `AUTH_SECRET`, `STARTER_USER_EMAIL`.
 
 ## Where things live
 
-```
-src/
-├── convex/
-│   ├── schema.ts        # expenses, income, monthlySummaries tables + indexes
-│   ├── expenses.ts      # today/list queries, create/update/remove mutations
-│   ├── income.ts        # list + create/update/remove for income records
-│   └── monthly.ts       # month overview + summary-only month upsert/remove
-├── lib/
-│   └── money.ts         # paise math, formatting, date/month keys
-├── components/finance/
-│   └── ExpenseDialog.tsx# add/edit expense form (shared by Today and History)
-└── pages/
-    ├── Landing.tsx      # public landing page
-    ├── Dashboard.tsx    # Today — total, entries, add/edit/delete
-    ├── History.tsx      # months, income, summary-only months
-    └── Auth.tsx         # sign-in (email OTP or guest)
-```
-
 **Finding things fast:**
 
-- An expense is **created** in `src/convex/expenses.ts` → `create` (mutation).
-- Expenses are **fetched** by `expenses.today` / `expenses.list` (same file).
-- Today's list is **rendered** in `src/pages/Dashboard.tsx` (`LedgerRow`).
-- All DB access lives in `src/convex/*` — the frontend never touches storage
-  directly; it calls queries/mutations through Convex's typed client.
-- Money rules (paise conversion, formatting) live in `src/lib/money.ts`.
+- An expense is **created** in `server/services/expenses.js` → `create`,
+  validated in `server/utils/validation.js`, persisted via
+  `server/repositories/expenses.js`.
+- Expenses are **fetched** by `expenses.today()` / `listBetween()` in the same
+  service; routes live in `server/routes/expenses.js`.
+- Today's list is **rendered** in `public/js/home.js`.
+- Money rules (paise parse/format) live in `public/js/utils.js` (display only)
+  and `server/utils/validation.js` (authoritative).
+- All SQL lives in `server/repositories/*.js` — nothing else writes SQL.
 
 ## Data model
 
-- **Money** — integer paise everywhere. Client parses `₹120.50` → `12050` for
-  UX; the server re-validates (`INVALID_AMOUNT`, positive, safe integer).
+- **Money** — integer paise everywhere. The client parses `₹120.50` → `12050`
+  for UX; the server re-validates (`INVALID_AMOUNT`, positive, safe integer,
+  ≤ ₹1 crore). A float amount fails with 400 before it can reach SQLite.
 - **Dates** — each record stores `dateKey` (`"YYYY-MM-DD"`, the calendar day
   the money moved) and `occurredAt` (epoch ms, for ordering and display).
-  "Today" is computed **on the server**, so a skewed device clock can't move
-  saved entries to the wrong day.
-- **Ownership** — every table is keyed by `userId` and every query/mutation
-  checks the signed-in user; you only ever see your own ledger.
-- **Indexes** — `by_user_date` (today/month lookups), `by_user`
-  (range scans), `by_user_month` (summaries).
+  "Today" is computed **on the server** in the configured timezone, so a skewed
+  device clock can't move saved entries to the wrong day.
+- **Ownership** — every table is keyed by `user_id`; services check ownership
+  before read/write. The MVP auth issues a signed HMAC token for the single
+  starter user; requests fall back to the starter user without a token.
+- **Indexes** — `(user_id, date_key)` for today/range scans and
+  `(user_id, substr(date_key,1,7))` for monthly rollups; `UNIQUE (user_id,
+  month_key)` on summaries.
 
 ## API overview
 
-Convex functions replace the classic REST routes; the shape maps 1:1:
+Every response is one of:
 
-| Spec endpoint | Convex function | Notes |
+```
+{ "success": true,  "data": ... }
+{ "success": false, "error": { "message", "code" } }
+```
+
+| Method | Path | Purpose |
 | --- | --- | --- |
-| `GET /api/expenses/today` | `expenses.today` | returns `{ dateKey, expenses, totalPaise }` |
-| `GET /api/expenses` | `expenses.list` | optional inclusive `from`/`to` date keys |
-| `POST /api/expenses` | `expenses.create` | server-side validation |
-| `PATCH /api/expenses/:id` | `expenses.update` | ownership check |
-| `DELETE /api/expenses/:id` | `expenses.remove` | ownership check |
-| `GET /api/income` | `income.list` | optional `from`/`to` |
-| `POST /api/income` | `income.create` | Salary / Freelance / Other |
-| — | `monthly.overview` | months list, selected month totals, day breakdown |
-| — | `monthly.upsertSummary` / `removeSummary` | summary-only months |
+| GET | `/api/health` | liveness + server timezone |
+| POST | `/api/auth/token` | MVP token for the starter user |
+| GET | `/api/expenses/today` | today's entries + server-derived total |
+| GET | `/api/expenses?from&to` | inclusive date-range scan |
+| POST | `/api/expenses` | create (server validates) |
+| PATCH | `/api/expenses/:id` | edit (ownership check) |
+| DELETE | `/api/expenses/:id` | delete (ownership check) |
+| GET | `/api/income?from&to` | income list + total |
+| POST | `/api/income` | create (Salary / Freelance / Other) |
+| PATCH/DELETE | `/api/income/:id` | edit / delete |
+| GET | `/api/monthly/overview?month=YYYY-MM` | months, selected totals, per-day breakdown |
+| PUT/DELETE | `/api/monthly/summaries/:monthKey` | summary-only month upsert/remove |
 
-Errors are thrown server-side with a stable code in the message
-(`INVALID_AMOUNT`, `TITLE_REQUIRED`, `NOT_FOUND`, `UNAUTHENTICATED`), which the
-UI strips before displaying. Validation is authoritative on the server; client
-checks exist only for fast feedback.
+Error codes: `INVALID_AMOUNT`, `TITLE_REQUIRED`, `SOURCE_REQUIRED`,
+`INVALID_DATE`, `INVALID_MONTH`, `INVALID_TIMESTAMP`, `INVALID_JSON`,
+`NOT_FOUND`, `UNAUTHENTICATED`. Validation is authoritative on the server;
+client checks exist only for fast feedback.
 
 ## Features
 
-- **Today** — total spent, entry list, prominent *Spent money* button,
+- **Today** — total spent, entry list, prominent **+ Spent** button,
   edit/delete with confirmation, loading/empty/error states, duplicate-submit
   guard.
 - **History** — month chips, per-day grouped entries, income records with
   remaining = income − expenses, and **summary-only months** for the past
   ("income ₹30,000, expenses ₹29,700") without reconstructing transactions.
 - **No carry-forward** — each month stands alone; last month's remaining is
-  never auto-converted into this month's income (per spec §5). A carry-forward
+  never auto-converted into this month's income (spec §5). A carry-forward
   feature would be explicit and opt-in.
-- **Multi-device ready** — all state lives in the Convex database; the client
-  holds only temporary UI state and renders reactive subscriptions.
+- **Multi-device ready** — all state lives in SQLite on the server; the browser
+  holds only transient UI state and talks to the REST API.
 
 ## Deliberate decisions
 
-- **Convex instead of Express + SQLite** — the hosting environment runs the
-  Next-gen Freebuff stack where Convex is the managed backend/database; a
-  separate Node/Express process isn't hosted. The spec's architecture
-  (thin client, authoritative server validation, parameterized access, source
-  of truth on the server) is preserved; Convex queries/mutations + integer
-  paise give the same guarantees with less code.
-- **No ORM, no state library** — direct typed table access and plain React
-  state, matching the "boring, understandable solution" principle. A store /
-  observer layer would only be introduced if shared reactive state actually
-  hurt (Convex subscriptions already cover the reactive case).
+- **No ORM** — raw parameterized SQL in one repository layer; SQLite is fast
+  enough that no pooling or caching layer is warranted.
+- **No state library, no observer** — the URL decides the page, each page
+  fetches and renders. A pub/sub would only appear if shared reactive state
+  actually hurt.
 - **One dialog for add + edit** — prefilling the same form keeps both paths
   from drifting apart.
 - **Reminders / planned expenses** intentionally not built (spec §3 lists them
-  as future); the schema leaves room (`reminders` table) without committing to
-  a design.
+  as future); the schema leaves room without committing to a design.

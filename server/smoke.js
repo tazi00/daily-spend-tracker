@@ -9,9 +9,14 @@
  * Run: node server/smoke.js
  */
 import http from "node:http";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
-// Isolated database for the smoke run so we never touch real data.
-process.env.DB_PATH = "./data/smoke.sqlite";
+// Fresh throwaway database for every run, in the OS temp dir — so repeat runs
+// start from zero and the real ledger is never touched.
+const tmpDbDir = fs.mkdtempSync(path.join(os.tmpdir(), "ledger-smoke-"));
+process.env.DB_PATH = path.join(tmpDbDir, "smoke.sqlite");
 
 // Import AFTER setting env so config picks up the smoke DB path.
 const { default: app } = await import("./app.js");
