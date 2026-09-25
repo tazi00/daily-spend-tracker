@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ledger — Personal Finance Tracker</title>
+    <meta name="description" content="What did I spend today, and where did the money go?" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div id="toast" class="toast" hidden></div>
+
+    <!-- Home (today) -->
+    <div id="page-home" class="page">
+      <header class="masthead">
+        <div class="masthead-inner">
+          <div class="brand">
+            <div class="brand-mark">₹</div>
+            <div>
+              <p class="brand-name">Ledger</p>
+              <p class="brand-sub" id="home-date">Today</p>
+            </div>
+          </div>
+          <nav class="nav">
+            <a href="/history" data-nav class="nav-link">History</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="main main-narrow">
+        <section class="panel hero">
+          <div class="hero-head">
+            <p class="label-caps muted">Spent today</p>
+            <p class="hero-total tabular" id="today-total">—</p>
+            <div class="double-rule"></div>
+            <div class="hero-foot">
+              <p class="muted small" id="today-meta">Loading…</p>
+              <p class="tabular small muted" id="month-meta" hidden></p>
+            </div>
+          </div>
+          <div class="hero-cta">
+            <button class="btn btn-primary btn-block" id="add-expense-btn" type="button">+ Spent</button>
+          </div>
+        </section>
+
+        <section class="mt-24">
+          <div class="section-head">
+            <h2 class="label-caps muted">Today's entries</h2>
+            <p class="tabular small muted" id="today-list-total" hidden></p>
+          </div>
+
+          <div class="panel entries" id="today-skeleton" hidden>
+            <div class="row"><div class="row-main"><div class="sk sk-line"></div><div class="sk sk-sub"></div></div><div class="sk sk-amt"></div></div>
+            <div class="row"><div class="row-main"><div class="sk sk-line"></div><div class="sk sk-sub"></div></div><div class="sk sk-amt"></div></div>
+            <div class="row"><div class="row-main"><div class="sk sk-line"></div><div class="sk sk-sub"></div></div><div class="sk sk-amt"></div></div>
+          </div>
+
+          <div class="panel panel-dashed empty" id="today-empty" hidden>
+            <p class="empty-title">Nothing spent yet today</p>
+            <p class="muted small">Chai, auto fare, lunch — add it as soon as you spend and the day stays accounted for.</p>
+          </div>
+
+          <div class="panel panel-dashed empty" id="today-error" hidden>
+            <p class="empty-title">Couldn't load today</p>
+            <p class="muted small" id="today-error-msg"></p>
+            <button class="btn btn-ghost btn-sm" id="today-retry" type="button">Retry</button>
+          </div>
+
+          <ul class="panel ruled entries" id="today-list" hidden></ul>
+        </section>
+
+        <p class="footnote">Your ledger · data lives on the server, synced across your devices</p>
+      </main>
+    </div>
+
+    <!-- History -->
+    <div id="page-history" class="page" hidden>
+      <header class="masthead">
+        <div class="masthead-inner">
+          <div class="brand">
+            <a href="/" class="back-link" aria-label="Back to today">←</a>
+            <div class="brand-mark">₹</div>
+            <div>
+              <p class="brand-name">Ledger</p>
+              <p class="brand-sub">History</p>
+            </div>
+          </div>
+          <nav class="nav">
+            <button class="btn btn-ghost btn-sm" id="add-summary-btn" type="button">+ Summary month</button>
+          </nav>
+        </div>
+      </header>
+
+      <main class="main main-wide">
+        <div class="chips" id="month-chips" hidden></div>
+
+        <section class="panel statement" id="statement-summary" hidden>
+          <div class="row-between">
+            <p class="label-caps muted" id="summary-title">Summary only</p>
+            <button class="icon-btn danger" id="summary-delete-btn" type="button" aria-label="Remove month summary">✕</button>
+          </div>
+          <p class="muted small" id="summary-note" hidden></p>
+          <dl class="statement-lines">
+            <div class="line"><dt class="muted">Income</dt><dd class="tabular income" id="summary-income"></dd></div>
+            <div class="line"><dt class="muted">Expenses</dt><dd class="tabular" id="summary-expenses"></dd></div>
+          </dl>
+          <div class="double-rule"></div>
+          <div class="row-between">
+            <p class="label-caps muted">Remaining</p>
+            <p class="tabular statement-remaining" id="summary-remaining"></p>
+          </div>
+        </section>
+
+        <section class="panel statement" id="statement-detailed" hidden>
+          <div class="row-between">
+            <p class="label-caps muted" id="detailed-title">Month</p>
+            <button class="btn btn-ghost btn-sm" id="add-income-btn" type="button">+ Income</button>
+          </div>
+          <dl class="statement-lines">
+            <div class="line"><dt class="muted">Income</dt><dd class="tabular income" id="detailed-income"></dd></div>
+            <div class="line"><dt class="muted">Expenses</dt><dd class="tabular" id="detailed-expenses"></dd></div>
+          </dl>
+          <div class="double-rule"></div>
+          <div class="row-between">
+            <p class="label-caps muted">Remaining</p>
+            <p class="tabular statement-remaining" id="detailed-remaining"></p>
+          </div>
+        </section>
+
+        <section class="mt-24" id="history-entries-section" hidden>
+          <div class="section-head">
+            <h2 class="label-caps muted">Entries</h2>
+            <p class="muted small">Editing a past entry moves it to the right day automatically.</p>
+          </div>
+          <div class="history-entries" id="history-entries"></div>
+          <div class="panel panel-dashed empty" id="history-empty" hidden>
+            <p class="empty-title" id="history-empty-title">Nothing recorded</p>
+            <p class="muted small">Add income or expenses — or save this month as a summary if you only know the totals.</p>
+          </div>
+        </section>
+
+        <p class="footnote">Each month stands on its own — remaining money is not carried forward.</p>
+      </main>
+    </div>
+
+    <!-- Expense dialog (add + edit) -->
+    <dialog class="dlg" id="expense-dialog">
+      <form id="expense-form" method="dialog">
+        <h3 class="dlg-title" id="expense-dialog-title">Add expense</h3>
+        <p class="muted small" id="expense-dialog-sub">Where did today's money go?</p>
+
+        <label class="field">
+          <span class="label-caps muted">Title</span>
+          <input name="title" id="expense-title" maxlength="80" placeholder="Auto fare, chai, groceries…" required />
+        </label>
+
+        <div class="field-grid">
+          <label class="field">
+            <span class="label-caps muted">Amount (₹)</span>
+            <span class="money-input">
+              <span class="rupee tabular">₹</span>
+              <input name="amount" id="expense-amount" class="tabular" inputmode="decimal" placeholder="0.00" required />
+            </span>
+          </label>
+          <label class="field">
+            <span class="label-caps muted">Date</span>
+            <input name="date" id="expense-date" type="date" class="tabular" required />
+          </label>
+        </div>
+
+        <label class="field">
+          <span class="label-caps muted">Time</span>
+          <input name="time" id="expense-time" type="time" class="tabular" />
+        </label>
+
+        <p class="form-error" id="expense-error" hidden></p>
+
+        <div class="dlg-actions">
+          <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary" id="expense-submit">Add expense</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Income dialog (add + edit) -->
+    <dialog class="dlg" id="income-dialog">
+      <form id="income-form" method="dialog">
+        <h3 class="dlg-title" id="income-dialog-title">Add income</h3>
+        <p class="muted small">Money that came in — salary, freelance, other.</p>
+
+        <label class="field">
+          <span class="label-caps muted">Source</span>
+          <select name="source" id="income-source">
+            <option>Salary</option>
+            <option>Freelance</option>
+            <option>Other</option>
+          </select>
+        </label>
+
+        <div class="field-grid">
+          <label class="field">
+            <span class="label-caps muted">Amount (₹)</span>
+            <span class="money-input">
+              <span class="rupee tabular">₹</span>
+              <input name="amount" id="income-amount" class="tabular" inputmode="decimal" placeholder="0.00" required />
+            </span>
+          </label>
+          <label class="field">
+            <span class="label-caps muted">Date</span>
+            <input name="date" id="income-date" type="date" class="tabular" required />
+          </label>
+        </div>
+
+        <p class="form-error" id="income-error" hidden></p>
+
+        <div class="dlg-actions">
+          <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary" id="income-submit">Add income</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Summary-only month dialog -->
+    <dialog class="dlg" id="summary-dialog">
+      <form id="summary-form" method="dialog">
+        <h3 class="dlg-title">Summary-only month</h3>
+        <p class="muted small">For past months where you only know the totals — no need to reconstruct every transaction.</p>
+
+        <label class="field">
+          <span class="label-caps muted">Month</span>
+          <input name="month" id="summary-month" type="month" class="tabular" required />
+        </label>
+
+        <div class="field-grid">
+          <label class="field">
+            <span class="label-caps muted">Income (₹)</span>
+            <input name="income" id="summary-income-input" class="tabular" inputmode="decimal" placeholder="30000" />
+          </label>
+          <label class="field">
+            <span class="label-caps muted">Expenses (₹)</span>
+            <input name="expenses" id="summary-expenses-input" class="tabular" inputmode="decimal" placeholder="29700" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span class="label-caps muted">Note (optional)</span>
+          <input name="note" id="summary-note-input" maxlength="120" placeholder="e.g. Festival month" />
+        </label>
+
+        <p class="form-error" id="summary-error" hidden></p>
+
+        <div class="dlg-actions">
+          <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary" id="summary-submit">Save summary</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Generic delete confirmation -->
+    <dialog class="dlg dlg-confirm" id="confirm-dialog">
+      <h3 class="dlg-title">Delete this?</h3>
+      <p class="muted small" id="confirm-text"></p>
+      <div class="dlg-actions">
+        <button type="button" class="btn btn-ghost" data-close>Keep it</button>
+        <button type="button" class="btn btn-danger" id="confirm-delete">Delete</button>
+      </div>
+    </dialog>
+
+    <script type="module" src="/js/app.js"></script>
+  </body>
+</html>
